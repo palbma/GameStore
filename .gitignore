@@ -489,3 +489,5 @@ docker-compose.yml
 docker-compose.dcproj
 docker-compose.override.yml
 launchSettings.json
+# PostgreSQL data folder
+postgres_data/
