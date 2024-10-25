@@ -486,3 +486,6 @@ $RECYCLE.BIN/
 Dockerfile
 docker-compose.yml
 .dockerignore
+docker-compose.dcproj
+docker-compose.override.yml
+launchSettings.json
