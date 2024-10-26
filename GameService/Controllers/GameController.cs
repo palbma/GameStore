@@ -1,10 +1,13 @@
-﻿using GameService.Contracts;
+﻿using Azure.Core;
+using GameService.Contracts;
 using GameService.GameContracts;
 using GameService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System.Linq.Expressions;
+using static Azure.Core.HttpHeader;
 using static System.Net.Mime.MediaTypeNames;
 namespace GameService.Controllers
 {
@@ -98,11 +101,21 @@ namespace GameService.Controllers
         public async Task<IActionResult> Get([FromQuery] GetGameRequest request, CancellationToken ct)
         {
             var gamesQuery = _dbContext.Games.Where(n => string.IsNullOrEmpty(request.Search)
-            || n.Title.ToLower().Contains(request.Search.ToLower()));
-
-
+            || n.Title.ToLower().Contains(request.Search.ToLower()));   
+            switch (request.SortOrder)
+            {
+                case "desc":
+                    gamesQuery = gamesQuery.OrderByDescending(SortByItem(request.SortItem));
+                    break;
+                default:
+                    gamesQuery = gamesQuery.OrderBy(SortByItem(request.SortItem));
+                    break;
+            }
             var games = await gamesQuery.ToListAsync(cancellationToken: ct);
-
+            if (!games.Any())
+            {
+                return NotFound("No notes found.");
+            }
             var gameDtos = await gamesQuery.Select(game => new GameDto(
                     game.GameId,
                     game.Title,
@@ -115,6 +128,23 @@ namespace GameService.Controllers
                 )).ToListAsync(ct);
 
             return Ok(new GetGameResponse(gameDtos));
+        }
+        private Expression<Func<Game, object>> SortByItem(string? sortItem)
+        {
+            Expression<Func<Game, object>> selectorKey;
+            switch (sortItem?.ToLower())
+            {
+                case "price":
+                    selectorKey = game => game.Price;
+                    break;
+                case "title":
+                    selectorKey = game => game.Title;
+                    break;
+                default:
+                    selectorKey = game => game.GameId;
+                    break;
+            }
+            return selectorKey;
         }
     }
 }
