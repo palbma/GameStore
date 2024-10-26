@@ -101,7 +101,8 @@ namespace GameService.Controllers
         public async Task<IActionResult> Get([FromQuery] GetGameRequest request, CancellationToken ct)
         {
             var gamesQuery = _dbContext.Games.Where(n => string.IsNullOrEmpty(request.Search)
-            || n.Title.ToLower().Contains(request.Search.ToLower()));   
+            || n.Title.ToLower().Contains(request.Search.ToLower()));
+            
             switch (request.SortOrder)
             {
                 case "desc":
@@ -111,6 +112,7 @@ namespace GameService.Controllers
                     gamesQuery = gamesQuery.OrderBy(SortByItem(request.SortItem));
                     break;
             }
+
             var games = await gamesQuery.ToListAsync(cancellationToken: ct);
             if (!games.Any())
             {
