@@ -41,8 +41,8 @@ namespace GameService.Controllers
              thumpnailPath,
              request.altText)
             {
-                GameId = gameInfo.GameId, 
-                Game = gameInfo 
+                GameId = gameInfo.GameId,
+                Game = gameInfo
             };
 
             gameImage.Game = gameInfo;
@@ -71,7 +71,7 @@ namespace GameService.Controllers
                     Mode = ResizeMode.Crop
                 }));
 
-               
+
                 await image.SaveAsync(thumbnailPath, ct);
             }
 
@@ -95,14 +95,14 @@ namespace GameService.Controllers
                 await imageFile.CopyToAsync(stream, ct);
             }
 
-            return uploadPath; 
+            return uploadPath;
         }
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] GetGameRequest request, CancellationToken ct)
         {
             var gamesQuery = _dbContext.Games.Where(n => string.IsNullOrEmpty(request.Search)
             || n.Title.ToLower().Contains(request.Search.ToLower()));
-            
+
             switch (request.SortOrder)
             {
                 case "desc":
@@ -147,6 +147,110 @@ namespace GameService.Controllers
                     break;
             }
             return selectorKey;
+        }
+        [HttpDelete("{gameId}")]
+        public async Task<IActionResult> DeleteGame(Guid gameId)
+        {
+            var game = await _dbContext.Games.FindAsync(gameId);
+
+
+            if (game == null)
+            {
+                return NotFound(new { message = $"Game with ID {gameId} not found." });
+            }
+
+            if (game.ImageId.HasValue)
+            {
+                var image = await _dbContext.GameImages.FindAsync(game.ImageId.Value);
+
+                if (image != null)
+                {
+                    _dbContext.GameImages.Remove(image);
+                }
+            }
+            else
+            {
+                return NotFound(new { message = "Not found" });
+            }
+
+            _dbContext.Games.Remove(game);
+
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+        // fix it cause crivo napisano
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateGame(Guid id, [FromForm] UpdateGameRequest updateGameRequest, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var game = _dbContext.Games.Find(id);
+            if (game == null)
+            {
+                return NotFound("game not foudn");
+            }
+
+            var image = _dbContext.GameImages.Find(game.ImageId.Value);
+
+            if (image == null)
+            {
+                return NotFound("image not foudn");
+            }
+
+            UpdateGameFields(game, updateGameRequest);
+
+
+            UpdateImageFile(image, updateGameRequest, ct);
+
+
+            _dbContext.GameImages.Update(image);
+            _dbContext.Games.Update(game);
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+        private void UpdateGameFields(Game game, UpdateGameRequest updateGameRequest)
+        {
+            if (!string.IsNullOrWhiteSpace(updateGameRequest.title))
+            {
+                game.Title = updateGameRequest.title;
+            }
+            if (updateGameRequest.price.HasValue)
+            {
+                game.Price = updateGameRequest.price.Value;
+            }
+            if (!string.IsNullOrWhiteSpace(updateGameRequest.category))
+            {
+                game.Category = updateGameRequest.category;
+            }
+            if (!string.IsNullOrWhiteSpace(updateGameRequest.description))
+            {
+                game.Description = updateGameRequest.description;
+            }
+        }
+        private async void UpdateImageFile(GameImage image, UpdateGameRequest updateGameRequest, CancellationToken ct) 
+        {
+            if (updateGameRequest.file != null)
+            {
+                var newImagePath = await SaveImageAsync(updateGameRequest.file, ct);
+                var newThumbnailPath = await SaveThumbnailAsync(newImagePath, ct);
+
+                if (System.IO.File.Exists(image.ImagePath))
+                {
+                    System.IO.File.Delete(image.ImagePath);
+                }
+                if (System.IO.File.Exists(image.ThumbnailPath))
+                {
+                    System.IO.File.Delete(image.ThumbnailPath);
+                }
+
+                image.ImagePath = newImagePath;
+                image.ThumbnailPath = newThumbnailPath;
+            }
         }
     }
 }

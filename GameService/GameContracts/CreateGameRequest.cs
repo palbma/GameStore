@@ -7,6 +7,6 @@ namespace GameService.Contracts
     float price,
     string category,
     string description,
-    IFormFile file, // файл для загрузки
+    IFormFile file, 
     string altText);
 }
