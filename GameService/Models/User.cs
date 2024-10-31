@@ -5,10 +5,10 @@ namespace GameService.Models
     public class User
     {
         public int UserId { get; init; }
-        public string UserName { get; init; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
         public string UserEmail { get; init; } = string.Empty;
         public string UserPassword { get; init; } = string.Empty;
-        public string Role { get; init; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
 
         public User(string userName, string userEmail, string userPassword, string role)
         {
