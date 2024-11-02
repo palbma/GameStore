@@ -106,10 +106,14 @@ namespace GameService.Controllers
             {
                 user.UserName = updateUserRequest.UserName;
             }
-            if (!string.IsNullOrEmpty(updateUserRequest.UserName))
+            if (!string.IsNullOrWhiteSpace(updateUserRequest.UserName))
             {
                 user.Role = updateUserRequest.Role;
             }
+
+            _dbContext.Users.Update(user);
+            await _dbContext.SaveChangesAsync();
+
             return NoContent();
         }
     }

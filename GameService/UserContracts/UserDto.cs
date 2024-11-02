@@ -1,7 +1,7 @@
 ﻿namespace GameService.UserContracts
 {
     public record UserDto(
-        int GameId,
+        int UserId,
         string Username,
         string UserEmail,
         string UserPassword,

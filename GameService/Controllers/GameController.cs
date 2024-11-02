@@ -114,10 +114,12 @@ namespace GameService.Controllers
             }
 
             var games = await gamesQuery.ToListAsync(cancellationToken: ct);
+
             if (!games.Any())
             {
                 return NotFound("No notes found.");
             }
+
             var gameDtos = await gamesQuery.Select(game => new GameDto(
                     game.GameId,
                     game.Title,
