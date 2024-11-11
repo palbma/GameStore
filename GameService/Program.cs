@@ -6,6 +6,10 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using GameService.Repository.Interfaces;
 using GameService.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using SixLabors.ImageSharp;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSwaggerGen(c =>
@@ -16,17 +20,35 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 });
+var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 //builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
 //    .AddDefaultTokenProviders();
+builder.Services.AddAuthentication(l =>
+{
+    l.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    l.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}
+).AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+    };
+});
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API");
     c.RoutePrefix = string.Empty;  
 });
 if (!app.Environment.IsDevelopment())
@@ -43,6 +65,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 
