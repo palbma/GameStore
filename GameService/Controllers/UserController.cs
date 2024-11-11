@@ -49,6 +49,10 @@ namespace GameService.Controllers
                 return BadRequest("User alredy exist");
             }
             var user = await _userRepository.Register(registrationRequest);
+            if (user == null) 
+            {
+                return BadRequest("Error while register");
+            }
             return Ok(user);
         }
 

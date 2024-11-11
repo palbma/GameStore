@@ -2,6 +2,7 @@
 using GameService.Contracts;
 using GameService.GameContracts;
 using GameService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
@@ -22,6 +23,7 @@ namespace GameService.Controllers
             _dbContext = dbContext;
         }
         [HttpPost]
+        [Authorize(Roles = "admin,superuser")]
         public async Task<IActionResult> CreateGame([FromForm] CreateGameRequest request, CancellationToken ct)
         {
             var imagePath = await SaveImageAsync(request.file, ct);
@@ -97,7 +99,9 @@ namespace GameService.Controllers
 
             return uploadPath;
         }
+        
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Get([FromQuery] GetGameRequest request, CancellationToken ct)
         {
             var gamesQuery = _dbContext.Games.Where(n => string.IsNullOrEmpty(request.Search)
@@ -151,6 +155,7 @@ namespace GameService.Controllers
             return selectorKey;
         }
         [HttpDelete("{gameId}")]
+        [Authorize(Roles = "admin,superuser")]
         public async Task<IActionResult> DeleteGame(Guid gameId)
         {
             var game = await _dbContext.Games.FindAsync(gameId);
@@ -183,6 +188,7 @@ namespace GameService.Controllers
         }
         // fix it cause crivo napisano
         [HttpPatch("{id}")]
+        [Authorize(Roles = "admin,superuser")]
         public async Task<IActionResult> UpdateGame(Guid id, [FromForm] UpdateGameRequest updateGameRequest, CancellationToken ct)
         {
             if (!ModelState.IsValid)
