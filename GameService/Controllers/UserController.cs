@@ -1,7 +1,9 @@
 ﻿using Azure.Core;
 using GameService.Models;
+using GameService.Repository.Interfaces;
 using GameService.UserContracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
@@ -12,24 +14,57 @@ namespace GameService.Controllers
     public class UserController : Controller
     {
         private ApplicationDbContext _dbContext;
+        private readonly IUserRepository _userRepository;
 
-        public UserController(ApplicationDbContext dbContext)
+        public UserController(ApplicationDbContext dbContext, IUserRepository userRepository)
         {
             _dbContext = dbContext;
+            _userRepository = userRepository;
         }
-        [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest createUserRequest, CancellationToken ct)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO createUserRequest)
         {
-            var user = new User(
-                    createUserRequest.UserName,
-                    createUserRequest.UserEmail,
-                    createUserRequest.UserPassword,
-                    createUserRequest.Role
-                );
-            await _dbContext.Users.AddAsync(user, ct);
-            await _dbContext.SaveChangesAsync(ct);
-            return Ok();
+            if (createUserRequest == null)
+            {
+                return BadRequest("null request");
+            }
+            var loginResponse = await _userRepository.Login(createUserRequest);
+
+            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token)) 
+            {
+                return BadRequest("username or password incorect");
+            }
+            return Ok(loginResponse);
         }
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegistrationRequestDTO registrationRequest)
+        {
+            if (registrationRequest == null)
+            {
+                return BadRequest("null request");
+            }
+            bool isUserNameUnique = _userRepository.IsUniqueUser(registrationRequest.UserName);
+            if (isUserNameUnique == false) 
+            {
+                return BadRequest("User alredy exist");
+            }
+            var user = await _userRepository.Register(registrationRequest);
+            return Ok(user);
+        }
+
+        //[HttpPost]
+        //public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest createUserRequest, CancellationToken ct)
+        //{
+        //    var user = new User {
+        //            createUserRequest.UserName,
+        //            createUserRequest.UserEmail,
+        //            createUserRequest.UserPassword,
+        //            createUserRequest.Role
+        //        };
+        //    await _dbContext.Users.AddAsync(user, ct);
+        //    await _dbContext.SaveChangesAsync(ct);
+        //    return Ok();
+        //}
 
         [HttpGet]
         public async Task<IActionResult> GetUser([FromQuery] GetGameRequest getGameRequest, CancellationToken ct)

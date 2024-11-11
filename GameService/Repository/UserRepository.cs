@@ -40,7 +40,11 @@ namespace GameService.Repository
 
             if (user == null) 
             {
-                return null;
+                return new LoginResponeDTO()
+                {
+                    Token = string.Empty,
+                    User = null,
+                };
             }
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(secretKey);
