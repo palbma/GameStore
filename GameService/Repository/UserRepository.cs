@@ -70,16 +70,17 @@ namespace GameService.Repository
 
         public async Task<User> Register(RegistrationRequestDTO registrationRequestDTO)
         {
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(registrationRequestDTO.Password);
+
             var user = new User()
             {
                 UserName = registrationRequestDTO.UserName,
                 UserEmail = registrationRequestDTO.Email,
-                UserPassword = registrationRequestDTO.Password,
+                UserPassword = hashedPassword,
                 Role = registrationRequestDTO.Role
             };
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            user.UserPassword = string.Empty;
             return user;
         }
     }

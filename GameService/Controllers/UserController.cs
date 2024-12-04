@@ -2,6 +2,7 @@
 using GameService.Models;
 using GameService.Repository.Interfaces;
 using GameService.UserContracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;

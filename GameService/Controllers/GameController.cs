@@ -13,6 +13,7 @@ using static System.Net.Mime.MediaTypeNames;
 namespace GameService.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("[controller]")]
     public class GameController : Controller
     {
